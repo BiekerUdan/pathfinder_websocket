@@ -30,14 +30,14 @@ class Store {
     /**
      * log store for log entries
      * -> store size should be limited for memory reasons
-     * @var array
+     * @var array<int, array<string, mixed>>
      */
     private $store                  = [];
 
     /**
      * all valid types for custom log events
      * if value is false, logs for this type are ignored
-     * @var array
+     * @var array<string, bool>
      */
     protected $logTypes             = [
         'error'     =>  true,
@@ -66,7 +66,7 @@ class Store {
 
     /**
      * get all stored log entries
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
     public function getStore() : array {
         return $this->store;
@@ -75,7 +75,7 @@ class Store {
     /**
      * @param bool $locked
      */
-    public function setLocked(bool $locked){
+    public function setLocked(bool $locked) : void {
         $this->locked = $locked;
     }
 
@@ -89,7 +89,7 @@ class Store {
     /**
      * @param int $logLevel
      */
-    public function setLogLevel(int $logLevel){
+    public function setLogLevel(int $logLevel) : void {
         switch($logLevel){
             case 3:
                 $this->logTypes['error'] = true;
@@ -115,13 +115,13 @@ class Store {
     /**
      * this is used for custom log events like 'error', 'debug',...
      * works as dispatcher method that calls individual log*() methods
-     * @param $logTypes
+     * @param string|array<int, string> $logTypes
      * @param string|null $remoteAddress
      * @param int|null $resourceId
      * @param string $action
      * @param string $message
      */
-    public function log($logTypes, ?string $remoteAddress, ?int $resourceId, string $action, string $message = '') : void {
+    public function log(string|array $logTypes, ?string $remoteAddress, ?int $resourceId, string $action, string $message = '') : void {
         if(!$this->isLocked()){
             // filter out logTypes that should not be logged
             $logTypes = array_filter((array)$logTypes, function(string $type) : bool {
@@ -145,12 +145,12 @@ class Store {
 
     /**
      * get log data as array for a custom log entry
-     * @param array $logTypes
+     * @param array<int, string> $logTypes
      * @param string|null $remoteAddress
      * @param int|null $resourceId
      * @param string $action
      * @param string $message
-     * @return array
+     * @return array<string, mixed>
      */
     private function getLogData(array $logTypes, ?string $remoteAddress, ?int $resourceId, string $action, string $message = '') : array {
         $file = null;
@@ -189,7 +189,7 @@ class Store {
 
     /**
      * echo log data to stdout -> terminal
-     * @param array $logData
+     * @param array<string, mixed> $logData
      */
     private function echoLog(array $logData) : void {
         if(!self::$colors){
@@ -215,6 +215,10 @@ class Store {
      * @return \DateTime
      */
     public static function getDateTimeFromMicrotime(float $mTime) : \DateTime {
-        return \DateTime::createFromFormat('U.u', number_format($mTime, 6, '.', ''));
+        $dateTime = \DateTime::createFromFormat('U.u', number_format($mTime, 6, '.', ''));
+        if ($dateTime === false) {
+            throw new \RuntimeException("Failed to create DateTime from microtime: $mTime");
+        }
+        return $dateTime;
     }
 }

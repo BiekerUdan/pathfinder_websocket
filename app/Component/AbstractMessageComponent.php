@@ -43,7 +43,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
      *          'data' => null
      *      ]
      * ]
-     * @var array
+     * @var array<int, array{connection: \Ratchet\ConnectionInterface, data: array<string, mixed>|null}>
      */
     private $connections;
 
@@ -70,7 +70,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
      * new client connection onOpen
      * @param ConnectionInterface $conn
      */
-    public function onOpen(ConnectionInterface $conn){
+    public function onOpen(ConnectionInterface $conn) : void {
         $this->log(['debug'], $conn, __FUNCTION__, 'open connection');
 
         $this->addConnection($conn);
@@ -80,7 +80,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
      * client connection onClose
      * @param ConnectionInterface $conn
      */
-    public function onClose(ConnectionInterface $conn){
+    public function onClose(ConnectionInterface $conn) : void {
         $this->log(['debug'], $conn, __FUNCTION__, 'close connection');
 
         $this->removeConnection($conn);
@@ -91,21 +91,21 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
      * @param ConnectionInterface $conn
      * @param \Exception $e
      */
-    public function onError(ConnectionInterface $conn, \Exception $e){
+    public function onError(ConnectionInterface $conn, \Exception $e) : void {
         $this->log(['debug', 'error'], $conn, __FUNCTION__, $e->getMessage());
     }
 
     /**
      * new message received from client connection
-     * @param ConnectionInterface $conn
+     * @param ConnectionInterface $from
      * @param string $msg
      */
-    public function onMessage(ConnectionInterface $conn, $msg){
+    public function onMessage(ConnectionInterface $from, $msg) : void {
         // parse message into payload object
         $payload = $this->getPayloadFromMessage($msg);
 
         if($payload){
-            $this->dispatchWebSocketPayload($conn, $payload);
+            $this->dispatchWebSocketPayload($from, $payload);
         }
     }
 
@@ -118,6 +118,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
     private function addConnection(ConnectionInterface $conn) : void {
         $this->connections[$conn->resourceId] = [
             'connection' => $conn,
+            'data' => null
         ];
 
         $this->maxConnections = max(count($this->connections), $this->maxConnections);
@@ -161,7 +162,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
      * update meta data for $conn
      * @param ConnectionInterface $conn
      */
-    protected function updateConnection(ConnectionInterface $conn){
+    protected function updateConnection(ConnectionInterface $conn) : void {
         if($this->hasConnection($conn)){
             $meta = [
                 'mTimeSend' => microtime(true)
@@ -173,7 +174,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
     /**
      * get meta data from $conn
      * @param ConnectionInterface $conn
-     * @return array
+     * @return array<string, mixed>
      */
     protected function getConnectionData(ConnectionInterface $conn) : array {
         $meta = [];
@@ -187,9 +188,9 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
      * wrapper for ConnectionInterface->send()
      * -> this stores some meta data to the $conn
      * @param ConnectionInterface $conn
-     * @param $data
+     * @param string $data
      */
-    protected function send(ConnectionInterface $conn, $data){
+    protected function send(ConnectionInterface $conn, string $data) : void {
         $conn->send($data);
         $this->updateConnection($conn);
     }
@@ -219,7 +220,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
     /**
      * @param string $task
      * @param null $load
-     * @param array|null $characterIds
+     * @param array<int>|null $characterIds
      * @return Payload|null
      */
     protected function newPayload(string $task, $load = null, ?array $characterIds = null) : ?Payload {
@@ -235,7 +236,7 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
 
     /**
      * get WebSocket stats data
-     * @return array
+     * @return array{connections: int, maxConnections: int, logs: array<int, array<string, mixed>>}
      */
     public function getSocketStats() : array {
         return [
@@ -246,12 +247,12 @@ abstract class AbstractMessageComponent implements MessageComponentInterface {
     }
 
     /**
-     * @param $logTypes
+     * @param string|array<int, string> $logTypes
      * @param ConnectionInterface|null $connection
      * @param string $action
      * @param string $message
      */
-    protected function log($logTypes, ?ConnectionInterface $connection, string $action, string $message = '') : void {
+    protected function log(string|array $logTypes, ?ConnectionInterface $connection, string $action, string $message = '') : void {
         if($this->logStore){
             $remoteAddress = $connection ? $connection->remoteAddress : null;
             $resourceId = $connection ? $connection->resourceId : null;

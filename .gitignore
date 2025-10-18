@@ -9,3 +9,10 @@ gen
 
 vendor
 
+# Testing
+coverage/
+.phpunit.cache/
+.phpunit.result.cache
+
+CLAUDE.md
+.claude
