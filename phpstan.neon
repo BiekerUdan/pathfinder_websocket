@@ -1,0 +1,18 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 8
+    phpVersion: 80400
+    paths:
+        - app
+        - cmd.php
+    excludePaths:
+        - vendor
+
+    # Enable stricter checks gradually
+    checkExplicitMixedMissingReturn: true
+    checkPhpDocMissingReturn: true
+
+    # Report unused variables and parameters
+    reportUnmatchedIgnoredErrors: false

@@ -1,6 +1,10 @@
 <?php
 require 'vendor/autoload.php';
 
+// Suppress vendor deprecation warnings (Ratchet library PHP 8.4 compatibility)
+if (file_exists(__DIR__ . '/docker/suppress_vendor_warnings.php')) {
+    require __DIR__ . '/docker/suppress_vendor_warnings.php';
+}
 
 use Exodus4D\Socket;
 

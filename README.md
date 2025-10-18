@@ -1,9 +1,22 @@
 ## WebSocket server for [Pathfinder](https://github.com/exodus4d/pathfinder)
 
+This is a fork of what was originally https://github.com/exodus4d/pathfinder_websocket the websocket server implementation for the Eve-Online mapping and logistics tool [Pathfinder](https://github.com/exodus4d/pathfinder)
+
+Many people have contributed to this project over time.
+My intent with this fork is to upgrade the app to modern PHP versions and dependencies.
+
+Some of the changes are specific to my own use case where I run many pathfinder instances in kubernetes in a self serve hosting platform, but I hope to keep the application itself and the container builds generic enough to be useful to others.
+
 ### Requirements
-- _PHP_ (≥ v7.1)
-- A working instance of *[Pathfinder](https://github.com/exodus4d/pathfinder)* (≥ v2.0.0-rc.1)
+- _PHP_ (≥ v8.4)
+- A working instance of BiekerUdan's fork of *[Pathfinder](https://github.com/biekerudan/pathfinder) (≥ v3.0.0)
 - [_Composer_](https://getcomposer.org/download/) to install packages for the WebSocket server
+
+Premade containers for this project are available at [Docker Hub](https://hub.docker.com/repositories/biekerudan)
+The configuration to build these containers can be found in their respective GitHub repositories in the 'docker' folder
+
+
+## The rest of this readme is taken directly from the origial source and may not be up to date
 
 ### Install
 1. Checkout this project in a **new** folder e.g. `/var/www/websocket.pathfinder`

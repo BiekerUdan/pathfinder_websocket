@@ -52,12 +52,12 @@ abstract class AbstractSocket {
     }
 
     /**
-     * @param $logTypes
+     * @param string|array<int, string> $logTypes
      * @param Socket\ConnectionInterface|null $connection
      * @param string $action
      * @param string $message
      */
-    public function log($logTypes, ?Socket\ConnectionInterface $connection, string $action, string $message = '') : void {
+    public function log(string|array $logTypes, ?Socket\ConnectionInterface $connection, string $action, string $message = '') : void {
         if(!$this->logStore->isLocked()){
             $remoteAddress = $connection ? $connection->getRemoteAddress() : null;
             $this->logStore->log($logTypes, $remoteAddress, null, $action, $message);

@@ -55,7 +55,7 @@ class WebSockets {
         $this->startMapSocket();
     }
 
-    private function startMapSocket(){
+    private function startMapSocket() : void {
         // global EventLoop
         $loop   = EventLoop\Factory::create();
 

@@ -1,0 +1,45 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Docker files
+docker/
+!docker/php.ini
+!docker/suppress_vendor_warnings.php
+Dockerfile
+.dockerignore
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing and development
+tests/
+phpunit.xml
+phpstan.neon
+phpstan-baseline.neon
+.phpunit.result.cache
+coverage/
+
+# Vendor (will be installed during build)
+vendor/
+
+# Documentation
+README.md
+*.md
+
+# CI/CD
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.cache
+tmp/
+temp/

@@ -39,9 +39,9 @@ class LogFileHandler {
 
     /**
      * write log data into to file
-     * @param array $log
+     * @param array<string, mixed> $log
      */
-    public function write(array $log){
+    public function write(array $log) : void {
         $log = (string)json_encode($log, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if( !empty($log) ){
             if($stream = fopen($this->stream, 'a')){
@@ -59,7 +59,7 @@ class LogFileHandler {
     /**
      * create directory
      */
-    private function createDir(){
+    private function createDir() : void {
         // Do not try to create dir if it has already been tried.
         if ($this->dirCreated){
             return;

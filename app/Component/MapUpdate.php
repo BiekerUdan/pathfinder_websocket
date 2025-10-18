@@ -61,12 +61,12 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * log message for delete mapId broadcast
      */
-    const LOG_TEXT_MAP_DELETE           = 'delete mapId: $d → broadcast to %d connections';
+    const LOG_TEXT_MAP_DELETE           = 'delete mapId: %d → broadcast to %d connections';
 
     /**
      * timestamp (ms) from last healthCheck ping
      * -> timestamp received from remote TCP socket
-     * @var int|null
+     * @var float|null
      */
     protected $healthCheckToken;
 
@@ -100,14 +100,14 @@ class MapUpdate extends AbstractMessageComponent {
      *          ]
      *      ]
      * ]
-     * @var array
+     * @var array<int, list<array{token: string, expire: int, characterData: array<string, mixed>}>>
      */
     protected $characterAccessData;
 
     /**
      * access tokens for clients grouped by mapId
      * -> tokens are unique and expire onSubscribe!
-     * @var array
+     * @var array<int, array<int, list<array{token: string, expire: int}>>>
      */
     protected $mapAccessData;
 
@@ -123,7 +123,7 @@ class MapUpdate extends AbstractMessageComponent {
      *          '$conn3->resourceId' => $conn3
      *      ]
      * ]
-     * @var array
+     * @var array<int, array<int, \Ratchet\ConnectionInterface>>
      */
     protected $characters;
 
@@ -140,7 +140,7 @@ class MapUpdate extends AbstractMessageComponent {
      *      ]
      * ]
      *
-     * @var array
+     * @var array<int, array{characterIds: array<int, int>, data: array<string, mixed>}>
      */
     protected $subscriptions;
 
@@ -151,7 +151,7 @@ class MapUpdate extends AbstractMessageComponent {
      *      'charId_2' => $characterData2
      * ]
      *
-     * @var array
+     * @var array<int, array<string, mixed>>
      */
     protected $characterData;
 
@@ -173,14 +173,14 @@ class MapUpdate extends AbstractMessageComponent {
      * new client connection
      * @param ConnectionInterface $conn
      */
-    public function onOpen(ConnectionInterface $conn){
+    public function onOpen(ConnectionInterface $conn) : void {
         parent::onOpen($conn);
     }
 
     /**
      * @param ConnectionInterface $conn
      */
-    public function onClose(ConnectionInterface $conn){
+    public function onClose(ConnectionInterface $conn) : void {
         parent::onClose($conn);
 
         $this->unSubscribeConnection($conn);
@@ -190,7 +190,7 @@ class MapUpdate extends AbstractMessageComponent {
      * @param ConnectionInterface $conn
      * @param \Exception $e
      */
-    public function onError(ConnectionInterface $conn, \Exception $e){
+    public function onError(ConnectionInterface $conn, \Exception $e) : void {
         parent::onError($conn, $e);
 
         // close connection should trigger the onClose() callback for unSubscribe
@@ -201,7 +201,7 @@ class MapUpdate extends AbstractMessageComponent {
      * @param ConnectionInterface $conn
      * @param string $msg
      */
-    public function onMessage(ConnectionInterface $conn, $msg){
+    public function onMessage(ConnectionInterface $conn, $msg) : void {
         parent::onMessage($conn, $msg);
     }
 
@@ -282,7 +282,7 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * subscribes a connection to valid accessible maps
      * @param ConnectionInterface $conn
-     * @param $subscribeData
+     * @param array<string, mixed> $subscribeData
      */
     private function subscribe(ConnectionInterface $conn, array $subscribeData) : void {
         $characterId = (int)$subscribeData['id'];
@@ -336,7 +336,7 @@ class MapUpdate extends AbstractMessageComponent {
      * subscribes an active connection from maps
      * @param ConnectionInterface $conn
      */
-    private function unSubscribeConnection(ConnectionInterface $conn){
+    private function unSubscribeConnection(ConnectionInterface $conn) : void {
         $characterIds = $this->getCharacterIdsByConnection($conn);
         $this->unSubscribeCharacterIds($characterIds, $conn);
     }
@@ -399,7 +399,7 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * unSubscribe $characterIds from ALL maps
      * -> if $conn is set -> just unSub the $characterId from this $conn
-     * @param int[] $characterIds
+     * @param array<int, int> $characterIds
      * @param ConnectionInterface|null $conn
      * @return bool
      */
@@ -468,7 +468,7 @@ class MapUpdate extends AbstractMessageComponent {
 
     /**
      * @param $mapId
-     * @return array
+     * @return array<int, int>
      */
     private function getCharacterIdsByMapId(int $mapId) : array {
         $characterIds = [];
@@ -484,7 +484,7 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * get connections by $characterIds
      * @param int[] $characterIds
-     * @return \SplObjectStorage
+     * @return \SplObjectStorage<\Ratchet\ConnectionInterface, mixed>
      */
     private function getConnectionsByCharacterIds(array $characterIds) : \SplObjectStorage {
         $connections = new \SplObjectStorage;
@@ -497,7 +497,7 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * get connections by $characterId
      * @param int $characterId
-     * @return \SplObjectStorage
+     * @return \SplObjectStorage<\Ratchet\ConnectionInterface, mixed>
      */
     private function getConnectionsByCharacterId(int $characterId) : \SplObjectStorage {
         $connections = new \SplObjectStorage;
@@ -518,7 +518,7 @@ class MapUpdate extends AbstractMessageComponent {
      * check character access against $this->characterAccessData whitelist
      * @param $characterId
      * @param $characterToken
-     * @return array
+     * @return array<string, mixed>
      */
     private function checkCharacterAccess(int $characterId, string $characterToken) : array {
         $characterData = [];
@@ -595,7 +595,7 @@ class MapUpdate extends AbstractMessageComponent {
 
     /**
      * broadcast $payload to $connections
-     * @param \SplObjectStorage $connections
+     * @param \SplObjectStorage<\Ratchet\ConnectionInterface, mixed> $connections
      * @param Payload $payload
      */
     private function broadcast(\SplObjectStorage $connections, Payload $payload) : void {
@@ -612,7 +612,7 @@ class MapUpdate extends AbstractMessageComponent {
      * -> send response back
      * @param string $task
      * @param null|int|array $load
-     * @return bool|float|int|null
+     * @return bool|float|int|string|null
      */
     public function receiveData(string $task, $load = null){
         $responseLoad = null;
@@ -669,15 +669,15 @@ class MapUpdate extends AbstractMessageComponent {
 
     /**
      * @param int $characterId
-     * @return array
+     * @return array<string, mixed>
      */
     private function getCharacterData(int $characterId) : array {
         return empty($this->characterData[$characterId]) ? [] : $this->characterData[$characterId];
     }
 
     /**
-     * @param array $characterIds
-     * @return array
+     * @param array<int, int> $characterIds
+     * @return array<int, array<string, mixed>>
      */
     private function getCharactersData(array $characterIds) : array {
         return array_filter($this->characterData, function($characterId) use($characterIds) {
@@ -703,7 +703,7 @@ class MapUpdate extends AbstractMessageComponent {
     }
 
     /**
-     * @param array $mapIds
+     * @param array<int, int> $mapIds
      */
     private function broadcastMapSubscriptions(array $mapIds) : void {
         $mapIds = array_unique($mapIds);
@@ -730,7 +730,7 @@ class MapUpdate extends AbstractMessageComponent {
 
     /**
      * @param string $task
-     * @param array $mapData
+     * @param array<string, mixed> $mapData
      * @return int
      */
     private function broadcastMapUpdate(string $task, array $mapData) : int {
@@ -784,7 +784,9 @@ class MapUpdate extends AbstractMessageComponent {
                 }
             }
 
-            $currentMapCharacterIds = (array)$this->subscriptions[$mapId]['characterIds'];
+            $currentMapCharacterIds = isset($this->subscriptions[$mapId]['characterIds'])
+                ? (array)$this->subscriptions[$mapId]['characterIds']
+                : [];
 
             // broadcast "map delete" to no longer valid characters ---------------------------------------------------
             $removedMapCharacterIds = array_keys(array_diff_key($currentMapCharacterIds, $newMapCharacterIds));
@@ -812,13 +814,13 @@ class MapUpdate extends AbstractMessageComponent {
 
     /**
      * set map access data (whitelist) tokens for map access
-     * @param $connectionAccessData
-     * @return bool
+     * @param mixed $connectionAccessData
+     * @return string|false
      */
-    private function setConnectionAccess($connectionAccessData){
+    private function setConnectionAccess(mixed $connectionAccessData){
         $response = false;
         $characterId = (int)$connectionAccessData['id'];
-        $characterData = $connectionAccessData['characterData'];
+        $characterData = (array)$connectionAccessData['characterData'];
         $characterToken = $connectionAccessData['token'];
 
         if(
@@ -854,7 +856,7 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * get stats data
      * -> lists all channels, subscribed characters + connection info
-     * @return array
+     * @return array{countSub: int, countCon: int, channels: list<array<string, mixed>>}
      */
     protected function getSubscriptionStats() : array {
         $uniqueConnections = [];
@@ -869,7 +871,6 @@ class MapUpdate extends AbstractMessageComponent {
                 'channelId'     => $mapId,
                 'channelName'   => $subData['data']['name'],
                 'countSub'      => count($characterIds),
-                'countCon'      => 0,
                 'subscriptions' => []
             ];
 
@@ -923,8 +924,8 @@ class MapUpdate extends AbstractMessageComponent {
     /**
      * compare two assoc arrays by keys. Key order is ignored
      * -> if all keys from array1 exist in array2 && all keys from array2 exist in array 1, arrays are supposed to be equal
-     * @param array $array1
-     * @param array $array2
+     * @param array<int|string, mixed> $array1
+     * @param array<int|string, mixed> $array2
      * @return bool
      */
     protected function arraysEqualKeys(array $array1, array $array2) : bool {
@@ -936,7 +937,7 @@ class MapUpdate extends AbstractMessageComponent {
      * @param array $meta
      * @param array $log
      */
-    private function handleLogData(array $meta, array $log){
+    private function handleLogData(array $meta, array $log) : void {
         $logHandler = new LogFileHandler((string)$meta['stream']);
         $logHandler->write($log);
     }
