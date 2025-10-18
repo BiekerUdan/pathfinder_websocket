@@ -6,6 +6,7 @@ use Exodus4D\Socket\Component\AbstractMessageComponent;
 use Exodus4D\Socket\Data\Payload;
 use Exodus4D\Socket\Log\Store;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use Ratchet\ConnectionInterface;
 
 class AbstractMessageComponentTest extends TestCase
@@ -14,6 +15,7 @@ class AbstractMessageComponentTest extends TestCase
      * This test would have caught the bug!
      * It verifies that send() works immediately after onOpen()
      */
+    #[CoversNothing]
     public function testSendImmediatelyAfterOnOpen(): void
     {
         $store = new Store('test');
@@ -60,6 +62,7 @@ class AbstractMessageComponentTest extends TestCase
     /**
      * Test that getConnectionData works for new connections
      */
+    #[CoversNothing]
     public function testGetConnectionDataForNewConnection(): void
     {
         $store = new Store('test');
