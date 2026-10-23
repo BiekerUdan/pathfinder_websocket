@@ -16,6 +16,7 @@ if(PHP_SAPI === 'cli'){
         'wsPort:'   => 8020,            // ↪ default WebSocket URI: 127.0.0.1:8020. This is where Nginx must proxy WebSocket traffic to
         'tcpHost:'  => '127.0.0.1',     // TcpSocket connection (for WebServer ⇄ WebSocket)
         'tcpPort:'  => 5555,            // ↪ default TcpSocket URI: tcp://127.0.0.1:5555
+        'tcpSecret:' => '',             // shared command-channel secret; prefer WS_COMMAND_SECRET env (per-instance K8s Secret)
         'debug:'    => 2                // Debug level [0-3] 0 = silent, 1 = errors, 2 = error + info, 3 = error + info + debug
     ];
 
@@ -85,7 +86,14 @@ if(PHP_SAPI === 'cli'){
 
     $dsn = 'tcp://' . $options['tcpHost'] . ':' . $options['tcpPort'];
 
-    new Socket\WebSockets($dsn, $options['wsPort'], $options['wsHost'], $options['debug']);
+    // shared command secret: explicit CLI opt wins, else per-instance env (K8s Secret)
+    $commandSecret = $options['tcpSecret'];
+    if(!is_string($commandSecret) || $commandSecret === ''){
+        $fromEnv = getenv('WS_COMMAND_SECRET');
+        $commandSecret = is_string($fromEnv) ? $fromEnv : '';
+    }
+
+    new Socket\WebSockets($dsn, $options['wsPort'], $options['wsHost'], $options['debug'], $commandSecret);
 
 }else{
     echo "Script need to be called by CLI!";

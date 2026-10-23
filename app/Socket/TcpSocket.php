@@ -48,6 +48,11 @@ class TcpSocket extends AbstractSocket{
     const ERROR_TASK_MISSING        = "Missing 'task' in payload";
 
     /**
+     * error message for missing/invalid command authentication
+     */
+    const ERROR_AUTH_INVALID        = "Missing or invalid 'auth' in payload";
+
+    /**
      * error message for unknown 'task' key in payload
      */
     const ERROR_TASK_UNKNOWN        = "Unknown 'task': '%s' in payload";
@@ -138,6 +143,18 @@ class TcpSocket extends AbstractSocket{
     private $startupTime            = 0;
 
     /**
+     * shared secret for TCP command authentication ('' = warn + accept unsigned, upgrade path)
+     * @var string
+     */
+    private $commandSecret          = '';
+
+    /**
+     * whether the missing-secret warning was already logged (log once)
+     * @var bool
+     */
+    private $warnedNoSecret         = false;
+
+    /**
      * TcpSocket constructor.
      * @param EventLoop\LoopInterface $loop
      * @param MessageComponentInterface $handler
@@ -145,6 +162,7 @@ class TcpSocket extends AbstractSocket{
      * @param string $acceptType
      * @param float $waitTimeout
      * @param bool $endWithResponse
+     * @param string $commandSecret shared command-channel secret
      */
     public function __construct(
         EventLoop\LoopInterface $loop,
@@ -152,13 +170,15 @@ class TcpSocket extends AbstractSocket{
         Store $store,
         string $acceptType          = self::DEFAULT_ACCEPT_TYPE,
         float $waitTimeout          = self::DEFAULT_WAIT_TIMEOUT,
-        bool $endWithResponse       = self::DEFAULT_END_WITH_RESPONSE
+        bool $endWithResponse       = self::DEFAULT_END_WITH_RESPONSE,
+        string $commandSecret       = ''
     ){
         parent::__construct($loop, $handler, $store);
 
         $this->acceptType           = $acceptType;
         $this->waitTimeout          = $waitTimeout;
         $this->endWithResponse      = $endWithResponse;
+        $this->commandSecret        = $commandSecret;
         $this->connections          = new \SplObjectStorage();
         $this->startupTime          = time();
     }
@@ -253,6 +273,12 @@ class TcpSocket extends AbstractSocket{
         return function(array $payload) use ($connection) : Promise\PromiseInterface {
             $task = (string)$payload['task'];
             if(!empty($task)){
+                // authenticate the command envelope when a secret is configured
+                if(!$this->verifyCommandAuth($connection, $task, $payload)){
+                    return Promise\reject(
+                        new \InvalidArgumentException(self::ERROR_AUTH_INVALID)
+                    );
+                }
                 $load = $payload['load'];
                 $deferred = new Promise\Deferred();
                 $this->dispatch($connection, $deferred, $task, $load);
@@ -263,6 +289,31 @@ class TcpSocket extends AbstractSocket{
                 );
             }
         };
+    }
+
+    /**
+     * verify the HMAC auth envelope of an incoming command payload
+     * -> no secret configured: warn once and accept (upgrade path;
+     *    production must set the shared secret, see cmd.php --tcpSecret)
+     * -> secret configured: fail closed on missing/invalid/replayed auth
+     * @param Socket\ConnectionInterface $connection
+     * @param string $task
+     * @param array<string, mixed> $payload
+     * @return bool
+     */
+    public function verifyCommandAuth(Socket\ConnectionInterface $connection, string $task, array $payload) : bool {
+        if($this->commandSecret === ''){
+            if(!$this->warnedNoSecret){
+                $this->warnedNoSecret = true;
+                $this->log(['info'], $connection, __FUNCTION__, 'no command secret configured - accepting unsigned commands (set --tcpSecret)');
+            }
+            return true;
+        }
+        $valid = CommandAuth::verify($this->commandSecret, $task, $payload['load'] ?? null, $payload['auth'] ?? null);
+        if(!$valid){
+            $this->log(['info'], $connection, __FUNCTION__, 'rejected command with invalid auth: "' . $task . '"');
+        }
+        return $valid;
     }
 
     /**

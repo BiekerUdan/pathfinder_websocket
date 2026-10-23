@@ -40,17 +40,24 @@ class WebSockets {
     protected $debug;
 
     /**
+     * @var string shared secret for TCP command authentication
+     */
+    protected $commandSecret;
+
+    /**
      * WebSockets constructor.
      * @param string $dsn
      * @param int $wsListenPort
      * @param string $wsListenHost
      * @param int $debug
+     * @param string $commandSecret shared TCP command secret ('' = warn + accept unsigned)
      */
-    function __construct(string $dsn, int $wsListenPort, string $wsListenHost, int $debug = 1){
+    function __construct(string $dsn, int $wsListenPort, string $wsListenHost, int $debug = 1, string $commandSecret = ''){
         $this->dsn = $dsn;
         $this->wsListenPort = $wsListenPort;
         $this->wsListenHost = $wsListenHost;
         $this->debug = $debug;
+        $this->commandSecret = $commandSecret;
 
         $this->startMapSocket();
     }
@@ -74,7 +81,7 @@ class WebSockets {
         });
 
         // TCP Socket -------------------------------------------------------------------------------------------------
-        $tcpSocket = new TcpSocket($loop, $mapUpdate, $tcpSocketLogStore);
+        $tcpSocket = new TcpSocket($loop, $mapUpdate, $tcpSocketLogStore, TcpSocket::DEFAULT_ACCEPT_TYPE, TcpSocket::DEFAULT_WAIT_TIMEOUT, TcpSocket::DEFAULT_END_WITH_RESPONSE, $this->commandSecret);
         // TCP Server (WebServer <-> TCPServer <-> TCPSocket communication)
         $server = new Socket\Server($this->dsn, $loop, [
             'tcp' => [
