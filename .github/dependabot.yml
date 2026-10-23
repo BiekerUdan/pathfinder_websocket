@@ -31,3 +31,16 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+
+  # Watch Docker base images so PHP security releases (e.g. php:8.4.x)
+  # surface as PRs instead of silently floating or going stale when pinned.
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"

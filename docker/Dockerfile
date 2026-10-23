@@ -1,4 +1,8 @@
-FROM php:8.4-cli-alpine
+# Pinned to 8.4.27 (2026-10-21 security release fixing CVE-2026-109618 +
+# CVE-2026-109619 unauthenticated RCE). Do NOT float this tag: rebuilds must
+# provably contain the patched PHP. Bump deliberately on the next PHP
+# security release (Dependabot docker watches).
+FROM php:8.4.27-cli-alpine
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
