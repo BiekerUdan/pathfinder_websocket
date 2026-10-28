@@ -2,7 +2,7 @@
 # CVE-2026-109619 unauthenticated RCE). Do NOT float this tag: rebuilds must
 # provably contain the patched PHP. Bump deliberately on the next PHP
 # security release (Dependabot docker watches).
-FROM php:8.4.27-cli-alpine
+FROM php:8.5.12-cli-alpine
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
